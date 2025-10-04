@@ -29,17 +29,57 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
+app.get("/", (req, res) => {
+  res.send("Reset Password Server is Running ✅");
+});
+
 app.post("/resetPassword", async (req, res) => {
   try {
     const { email, newPassword } = req.body;
-    if (!email || !newPassword) return res.status(400).json({ success: false, error: "Missing fields" });
+    
+    if (!email || !newPassword) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Email and newPassword are required" 
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Password must be at least 6 characters" 
+      });
+    }
+
     const user = await admin.auth().getUserByEmail(email);
-    await admin.auth().updateUser(user.uid, { password: newPassword });
-    await admin.auth().revokeRefreshTokens(user.uid);
-    return res.json({ success: true });
+    
+    await admin.auth().updateUser(user.uid, { 
+      password: newPassword,
+      emailVerified: true
+    });
+
+    console.log(`Password updated successfully for user: ${email}`);
+
+    return res.status(200).json({ 
+      success: true, 
+      message: "Password changed successfully",
+      uid: user.uid
+    });
+
   } catch (error) {
-    console.error("reset error:", error);
-    return res.status(400).json({ success: false, error: error.message });
+    console.error("Password reset error:", error);
+    
+    if (error.code === 'auth/user-not-found') {
+      return res.status(404).json({ 
+        success: false, 
+        error: "User not found" 
+      });
+    }
+    
+    return res.status(500).json({ 
+      success: false, 
+      error: error.message || "Failed to reset password"
+    });
   }
 });
 
