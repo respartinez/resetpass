@@ -4,15 +4,15 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 
 let serviceAccount;
-if (process.env.SERVICE_ACCOUNT_JSON) {
+if (process.env.SERVICE_ACCOUNT_KEY) {
   try {
-    serviceAccount = JSON.parse(process.env.SERVICE_ACCOUNT_JSON);
+    serviceAccount = JSON.parse(process.env.SERVICE_ACCOUNT_KEY);
   } catch (e) {
     try {
-      const decoded = Buffer.from(process.env.SERVICE_ACCOUNT_JSON, "base64").toString("utf8");
+      const decoded = Buffer.from(process.env.SERVICE_ACCOUNT_KEY, "base64").toString("utf8");
       serviceAccount = JSON.parse(decoded);
-    } catch (e2) {
-      console.error("Invalid SERVICE_ACCOUNT_JSON");
+    } catch {
+      console.error("Invalid SERVICE_ACCOUNT_KEY");
       process.exit(1);
     }
   }
@@ -22,7 +22,7 @@ if (process.env.SERVICE_ACCOUNT_JSON) {
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: process.env.FIREBASE_DATABASE_URL || "https://<YOUR_PROJECT_ID>.firebaseio.com"
+  databaseURL: process.env.FIREBASE_DATABASE_URL
 });
 
 const app = express();
